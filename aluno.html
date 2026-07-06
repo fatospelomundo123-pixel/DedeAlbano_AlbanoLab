@@ -1,0 +1,1233 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>My Courses — AlbanoLab</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  :root{
+    --gold:#e5383b;--gold-light:#ff6b6e;--gold-dim:#7a0c0e;
+    --bg:#0b090a;--bg-card:#161a1d;--bg-elevated:#1f2428;--bg-hover:#262b30;
+    --text:#F5F0E8;--text-secondary:#9A947E;--text-muted:#5A5548;
+    --border:rgba(229,56,59,0.15);--border-hover:rgba(229,56,59,0.35);
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;}
+
+  /* NAVBAR */
+  .navbar{display:flex;align-items:center;justify-content:space-between;padding:0 24px;height:56px;background:rgba(10,10,8,.97);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:100;backdrop-filter:blur(10px);gap:8px;}
+  .nav-logo{font-family:'Playfair Display',serif;font-size:15px;color:var(--gold);cursor:pointer;white-space:nowrap;flex-shrink:0;}
+  .nav-links{display:flex;gap:2px;flex-shrink:0;}
+  .nav-link{padding:6px 10px;cursor:pointer;color:var(--text-muted);font-size:13px;border-radius:4px;transition:all .15s;white-space:nowrap;}
+  .nav-link:hover{color:var(--text);background:var(--bg-hover);}
+  .nav-link.active{color:var(--gold);}
+  .nav-right{display:flex;align-items:center;gap:8px;flex-shrink:0;}
+  .user-avatar{width:32px;height:32px;border-radius:50%;background:var(--gold-dim);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;color:var(--gold-light);cursor:pointer;flex-shrink:0;}
+  .btn-logout{background:none;border:1px solid var(--border);color:var(--text-muted);padding:5px 10px;border-radius:4px;cursor:pointer;font-size:12px;font-family:'DM Sans';white-space:nowrap;}
+  .btn-logout:hover{color:var(--text);border-color:var(--border-hover);}
+
+  /* LANG SELECTOR */
+  .lang-selector{position:relative;}
+  .lang-btn{background:var(--bg-elevated);border:1px solid var(--border);color:var(--text-muted);padding:5px 10px;border-radius:4px;cursor:pointer;font-size:12px;font-family:'DM Sans';display:flex;align-items:center;gap:4px;}
+  .lang-btn:hover{border-color:var(--border-hover);color:var(--text);}
+  .lang-dropdown{position:absolute;top:calc(100% + 6px);right:0;background:var(--bg-card);border:1px solid var(--border);border-radius:6px;overflow:hidden;display:none;min-width:120px;z-index:200;box-shadow:0 8px 24px rgba(0,0,0,.4);}
+  .lang-selector.open .lang-dropdown{display:block;}
+  .lang-option{padding:9px 14px;font-size:13px;color:var(--text-secondary);cursor:pointer;transition:background .15s;display:flex;align-items:center;gap:8px;}
+  .lang-option:hover{background:var(--bg-hover);color:var(--text);}
+  .lang-option.active{color:var(--gold);}
+
+  /* VIEWS */
+  .view{display:none;padding:24px;}
+  .view.active{display:block;}
+
+  /* HERO */
+  .hero{padding:32px 24px 24px;background:linear-gradient(180deg,rgba(229,56,59,.04) 0%,transparent 100%);border-bottom:1px solid var(--border);}
+  .hero-welcome{font-size:11px;color:var(--text-muted);letter-spacing:.1em;text-transform:uppercase;margin-bottom:6px;}
+  .hero-name{font-family:'Playfair Display',serif;font-size:26px;color:var(--text);margin-bottom:4px;}
+  .hero-sub{font-size:13px;color:var(--text-secondary);}
+
+  /* SECTION */
+  .section{margin-bottom:40px;}
+  .section-title{font-family:'Playfair Display',serif;font-size:20px;margin-bottom:16px;}
+
+  /* MODAL CRIAR SENHA */
+  .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:200;display:none;align-items:center;justify-content:center;padding:16px;}
+  .modal-overlay.open{display:flex;}
+  .modal{background:var(--bg-card);border:1px solid var(--border);border-radius:10px;padding:28px;width:100%;max-width:420px;text-align:center;}
+  .modal-icon{font-size:36px;margin-bottom:14px;}
+  .modal-title{font-family:'Playfair Display',serif;font-size:20px;color:var(--text);margin-bottom:8px;}
+  .modal-sub{font-size:13px;color:var(--text-muted);margin-bottom:24px;line-height:1.6;}
+  .form-group{margin-bottom:14px;text-align:left;}
+  .form-label{font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.08em;display:block;margin-bottom:6px;font-weight:500;}
+  .form-input{width:100%;background:var(--bg-elevated);border:1px solid var(--border);color:var(--text);padding:10px 13px;border-radius:5px;font-size:14px;font-family:'DM Sans';outline:none;transition:border .15s;}
+  .form-input:focus{border-color:var(--gold);}
+  .btn-gold-full{width:100%;background:var(--gold);color:#0b090a;border:none;padding:12px;border-radius:5px;font-size:14px;font-weight:600;cursor:pointer;font-family:'DM Sans';transition:all .2s;margin-top:8px;}
+  .btn-gold-full:hover{background:var(--gold-light);}
+  .btn-gold-full:disabled{opacity:.5;cursor:not-allowed;}
+  .error-msg{background:rgba(192,57,43,.12);border:1px solid rgba(192,57,43,.3);color:#E74C3C;padding:10px 14px;border-radius:5px;font-size:13px;margin-top:12px;display:none;}
+  .success-msg{background:rgba(39,174,96,.12);border:1px solid rgba(39,174,96,.3);color:#27AE60;padding:10px 14px;border-radius:5px;font-size:13px;margin-top:12px;display:none;}
+  .spinner-sm{display:inline-block;width:14px;height:14px;border:2px solid rgba(10,10,8,.3);border-top-color:#0b090a;border-radius:50%;animation:spin .6s linear infinite;vertical-align:middle;margin-right:6px;}
+
+  /* COURSES GRID */
+  .courses-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:16px;}
+  .course-card{border-radius:8px;overflow:hidden;position:relative;cursor:pointer;transition:all .2s;background:var(--bg-card);border:1px solid var(--border);}
+  .course-card:hover{transform:translateY(-2px);border-color:var(--border-hover);}
+  .course-card.locked{opacity:.75;}
+  .course-thumb{width:100%;aspect-ratio:720/1040;background:var(--bg-elevated);display:flex;align-items:center;justify-content:center;font-size:36px;overflow:hidden;position:relative;}
+  .course-thumb img{width:100%;height:100%;object-fit:cover;}
+  .lock-overlay{position:absolute;inset:0;background:rgba(10,10,8,.65);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;}
+  .lock-icon{font-size:24px;}
+  .lock-text{font-size:10px;color:var(--gold);font-weight:600;letter-spacing:.08em;text-transform:uppercase;}
+  .course-body{padding:12px 14px;}
+  .course-name{font-family:'Playfair Display',serif;font-size:13px;margin-bottom:6px;line-height:1.3;}
+  .course-meta{font-size:11px;color:var(--text-muted);}
+  .course-progress{margin-top:10px;}
+  .progress-bar{height:3px;background:var(--bg-elevated);border-radius:2px;overflow:hidden;margin-bottom:4px;}
+  .progress-fill{height:100%;background:var(--gold);border-radius:2px;transition:width .3s;}
+  .progress-text{font-size:11px;color:var(--text-muted);}
+  .btn-comprar{display:block;margin-top:10px;width:100%;background:var(--gold);color:#0b090a;border:none;padding:8px;border-radius:4px;font-size:12px;font-weight:600;cursor:pointer;font-family:'DM Sans';text-align:center;}
+  .btn-comprar:hover{background:var(--gold-light);}
+
+  /* PLAYER VIEW */
+  .player-layout{display:grid;grid-template-columns:1fr 300px;gap:20px;align-items:start;}
+  .player-wrap{position:relative;padding-bottom:56.25%;background:#000;border-radius:8px;overflow:hidden;margin-bottom:14px;}
+  .player-wrap iframe{position:absolute;top:0;left:0;width:100%;height:100%;border:none;}
+  .player-title{font-family:'Playfair Display',serif;font-size:18px;margin-bottom:6px;}
+  .player-meta{font-size:13px;color:var(--text-muted);margin-bottom:14px;}
+  .files-section{background:var(--bg-card);border:1px solid var(--border);border-radius:8px;padding:16px;}
+  .files-title{font-size:11px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:12px;}
+  .file-item{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border);}
+  .file-item:last-child{border-bottom:none;}
+  .file-name{flex:1;font-size:13px;color:var(--text-secondary);}
+  .btn-download{background:transparent;border:1px solid var(--border-hover);color:var(--gold);padding:4px 10px;border-radius:3px;font-size:11px;cursor:pointer;text-decoration:none;display:inline-block;}
+  .btn-done{background:var(--gold);color:#0b090a;border:none;padding:8px 16px;border-radius:4px;font-size:13px;font-weight:600;cursor:pointer;font-family:'DM Sans';}
+
+  /* PLAYLIST SIDEBAR */
+  .playlist{background:var(--bg-card);border:1px solid var(--border);border-radius:8px;overflow:hidden;max-height:70vh;overflow-y:auto;}
+  .playlist-title{padding:12px 14px;font-size:12px;font-weight:600;border-bottom:1px solid var(--border);color:var(--text-secondary);}
+  .playlist-module{border-bottom:1px solid var(--border);}
+  .playlist-module:last-child{border-bottom:none;}
+  .playlist-module-title{padding:8px 14px;font-size:11px;font-weight:600;color:var(--text-muted);background:var(--bg-elevated);text-transform:uppercase;letter-spacing:.06em;}
+  .playlist-lesson{display:flex;align-items:center;gap:10px;padding:9px 14px;cursor:pointer;border-bottom:1px solid rgba(255,255,255,.03);transition:background .15s;}
+  .playlist-lesson:hover{background:var(--bg-hover);}
+  .playlist-lesson.active{background:rgba(229,56,59,.07);}
+  .playlist-lesson.done .pl-icon{color:#27AE60;}
+  .pl-icon{color:var(--text-muted);font-size:13px;flex-shrink:0;}
+  .playlist-lesson.active .pl-icon{color:var(--gold);}
+  .pl-title{flex:1;font-size:12px;color:var(--text-secondary);line-height:1.3;}
+  .playlist-lesson.active .pl-title{color:var(--text);}
+  .pl-dur{font-size:11px;color:var(--text-muted);}
+
+  /* BREADCRUMB */
+  .breadcrumb{display:flex;align-items:center;gap:6px;margin-bottom:20px;font-size:12px;color:var(--text-muted);flex-wrap:wrap;}
+  .breadcrumb a{color:var(--text-muted);cursor:pointer;}
+  .breadcrumb a:hover{color:var(--gold);}
+
+  .loading{display:flex;align-items:center;justify-content:center;padding:48px;color:var(--text-muted);font-size:14px;}
+  .spinner{display:inline-block;width:16px;height:16px;border:2px solid var(--border-hover);border-top-color:var(--gold);border-radius:50%;animation:spin .6s linear infinite;margin-right:8px;}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  ::-webkit-scrollbar{width:5px;}
+  ::-webkit-scrollbar-track{background:var(--bg);}
+  ::-webkit-scrollbar-thumb{background:var(--bg-hover);border-radius:4px;}
+
+  /* HAMBÚRGUER */
+  .hamburger{display:none;flex-direction:column;gap:5px;cursor:pointer;padding:6px;border:none;background:none;flex-shrink:0;}
+  .hamburger span{display:block;width:22px;height:2px;background:var(--text-secondary);border-radius:2px;transition:all .25s;}
+  .hamburger.open span:nth-child(1){transform:translateY(7px) rotate(45deg);}
+  .hamburger.open span:nth-child(2){opacity:0;}
+  .hamburger.open span:nth-child(3){transform:translateY(-7px) rotate(-45deg);}
+
+  /* MOBILE DRAWER */
+  .mobile-drawer{display:none;position:fixed;top:52px;left:0;right:0;background:var(--bg-card);border-bottom:1px solid var(--border);z-index:99;padding:8px 0;box-shadow:0 8px 24px rgba(0,0,0,.5);}
+  .mobile-drawer.open{display:block;}
+  .mobile-drawer-item{display:flex;align-items:center;gap:12px;padding:13px 20px;cursor:pointer;color:var(--text-secondary);font-size:14px;transition:background .15s;border:none;background:none;width:100%;text-align:left;font-family:'DM Sans';}
+  .mobile-drawer-item:hover{background:var(--bg-hover);color:var(--text);}
+  .mobile-drawer-item.active{color:var(--gold);}
+  .mobile-drawer-divider{height:1px;background:var(--border);margin:4px 0;}
+
+  /* ── MOBILE ── */
+  @media(max-width:768px){
+    .navbar{padding:0 14px;height:52px;}
+    .nav-logo{font-size:14px;}
+    .nav-links{display:none;}
+    .btn-logout{display:none;}
+    .hamburger{display:flex;}
+    .view{padding:16px;}
+    .hero{padding:24px 16px 16px;}
+    .hero-name{font-size:22px;}
+    .courses-grid{grid-template-columns:repeat(2,1fr);gap:12px;}
+    .player-layout{grid-template-columns:1fr;}
+    .playlist{max-height:50vh;}
+    .player-title{font-size:16px;}
+    .lang-btn{padding:4px 8px;}
+  }
+  @media(max-width:400px){
+    .courses-grid{grid-template-columns:1fr;}
+  }
+</style>
+</head>
+<body>
+
+<nav class="navbar">
+  <div class="nav-logo" onclick="goView('home');closeDrawer()">🔬 AlbanoLab</div>
+  <div class="nav-links">
+    <div class="nav-link active" onclick="goView('home');setNavActive(this)" data-i18n="nav_courses">My Courses</div>
+    <div class="nav-link" onclick="goView('catalogo');setNavActive(this)" data-i18n="nav_catalog">Catalog</div>
+    <div class="nav-link" onclick="goView('perfil');setNavActive(this)" data-i18n="nav_profile">My Profile</div>
+  </div>
+  <div class="nav-right">
+    <div class="lang-selector" id="langSelector">
+      <button class="lang-btn" onclick="toggleLangDropdown()">
+        <span id="langFlag">🇺🇸</span>
+        <span id="langLabel" style="font-size:11px">EN</span>
+        <span style="font-size:9px;opacity:.6">▾</span>
+      </button>
+      <div class="lang-dropdown" id="langDropdown">
+        <div class="lang-option active" id="lang-en" onclick="setLang('en')">🇺🇸 English</div>
+        <div class="lang-option" id="lang-pt" onclick="setLang('pt')">🇧🇷 Português</div>
+        <div class="lang-option" id="lang-es" onclick="setLang('es')">🇪🇸 Español</div>
+      </div>
+    </div>
+    <div class="user-avatar" id="userInitials">—</div>
+    <button class="btn-logout" onclick="doLogout()" data-i18n="btn_logout">Sign Out</button>
+    <!-- Hambúrguer (só mobile) -->
+    <button class="hamburger" id="hamburgerBtn" onclick="toggleDrawer()" aria-label="Menu">
+      <span></span><span></span><span></span>
+    </button>
+  </div>
+</nav>
+
+<!-- DRAWER MOBILE -->
+<div class="mobile-drawer" id="mobileDrawer">
+  <button class="mobile-drawer-item" id="drawer-home" onclick="goView('home');setNavActive(document.querySelector('.nav-link'));closeDrawer()">
+    🎵 <span data-i18n="nav_courses">My Courses</span>
+  </button>
+  <button class="mobile-drawer-item" id="drawer-catalogo" onclick="goView('catalogo');closeDrawer()">
+    📚 <span data-i18n="nav_catalog">Catalog</span>
+  </button>
+  <button class="mobile-drawer-item" id="drawer-perfil" onclick="goView('perfil');closeDrawer()">
+    👤 <span data-i18n="nav_profile">My Profile</span>
+  </button>
+  <div class="mobile-drawer-divider"></div>
+  <button class="mobile-drawer-item" onclick="doLogout()" style="color:#E74C3C">
+    🚪 <span data-i18n="btn_logout">Sign Out</span>
+  </button>
+</div>
+
+<!-- HOME: My Courses -->
+<div id="view-home" class="view active">
+  <div id="heroArea" class="hero">
+    <div class="hero-welcome" data-i18n="hero_welcome">Welcome back</div>
+    <div class="hero-name" id="heroName">Loading...</div>
+    <div class="hero-sub" id="heroSub">Continue where you left off</div>
+  </div>
+  <div style="padding:24px">
+    <div class="section">
+      <div class="section-title" data-i18n="my_courses">My Courses</div>
+      <div id="meusCursos" class="courses-grid">
+        <div class="loading"><span class="spinner"></span><span data-i18n="loading">Loading...</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- CATALOG -->
+<div id="view-catalogo" class="view">
+  <div class="section-title" style="margin-bottom:8px" data-i18n="catalog">Full Catalog</div>
+  <div style="font-size:14px;color:var(--text-muted);margin-bottom:24px" data-i18n="catalog_sub">Explore all available courses</div>
+  <div id="catalogoCursos" class="courses-grid">
+    <div class="loading"><span class="spinner"></span><span data-i18n="loading">Loading...</span></div>
+  </div>
+</div>
+
+<!-- PLAYER -->
+<div id="view-player" class="view" style="padding:32px">
+  <div class="breadcrumb">
+    <a onclick="goView('home')" data-i18n="nav_courses">My Courses</a> ›
+    <a id="playerCourseLink" onclick="">...</a> ›
+    <span id="playerLessonBread">...</span>
+  </div>
+  <div class="player-layout">
+    <div class="player-main">
+      <div class="player-wrap" id="playerWrap">
+        <iframe id="playerIframe" src="" allowfullscreen allow="autoplay"></iframe>
+      </div>
+      <div class="player-title" id="playerTitle">...</div>
+      <div class="player-meta" id="playerMeta">...</div>
+      <button class="btn-done" id="btnDone" onclick="markDone()" data-i18n="mark_done">✓ Mark as complete</button>
+      <div id="playerFiles" class="files-section" style="margin-top:20px;display:none">
+        <div class="files-title" data-i18n="materials">📎 Lesson Materials</div>
+        <div id="filesList"></div>
+      </div>
+    </div>
+    <div>
+      <div class="playlist" id="playlist"></div>
+    </div>
+  </div>
+</div>
+
+<!-- PERFIL ALUNO -->
+<div id="view-perfil" class="view" style="padding:32px;max-width:560px">
+  <div style="font-family:'Playfair Display',serif;font-size:22px;margin-bottom:24px;color:var(--text)" data-i18n="profile_title">My Profile</div>
+  <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:8px;padding:24px">
+    <div style="display:flex;align-items:center;gap:16px;margin-bottom:24px">
+      <div id="alunoPerfilAvatar" style="width:60px;height:60px;border-radius:50%;background:var(--gold-dim);display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:700;color:var(--gold-light);flex-shrink:0"></div>
+      <div>
+        <div id="alunoPerfilNome" style="font-family:'Playfair Display',serif;font-size:16px;color:var(--text)"></div>
+        <div style="font-size:12px;color:var(--text-muted);margin-top:2px">Student</div>
+      </div>
+    </div>
+    <div style="margin-bottom:14px">
+      <label style="font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.08em;display:block;margin-bottom:6px;font-weight:500" data-i18n="profile_name">Full name</label>
+      <input type="text" id="alunoPerfilName" placeholder="Your name" style="width:100%;background:var(--bg-elevated);border:1px solid var(--border);color:var(--text);padding:10px 13px;border-radius:5px;font-size:14px;font-family:'DM Sans';outline:none">
+    </div>
+    <div style="margin-bottom:14px">
+      <label style="font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.08em;display:block;margin-bottom:6px;font-weight:500" data-i18n="profile_email">Email</label>
+      <input type="email" id="alunoPerfilEmail" disabled style="width:100%;background:var(--bg-elevated);border:1px solid var(--border);color:var(--text);padding:10px 13px;border-radius:5px;font-size:14px;font-family:'DM Sans';opacity:.5;cursor:not-allowed">
+      <div style="font-size:11px;color:var(--text-muted);margin-top:4px" data-i18n="profile_email_hint">Email cannot be changed</div>
+    </div>
+    <div style="border-top:1px solid var(--border);margin:18px 0;padding-top:18px">
+      <div style="font-size:13px;font-weight:600;color:var(--text-secondary);margin-bottom:12px">Change Password</div>
+      <div style="margin-bottom:14px">
+        <label style="font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.08em;display:block;margin-bottom:6px;font-weight:500" data-i18n="profile_password">New Password</label>
+        <input type="password" id="alunoPerfilSenha" placeholder="Leave blank to keep current" style="width:100%;background:var(--bg-elevated);border:1px solid var(--border);color:var(--text);padding:10px 13px;border-radius:5px;font-size:14px;font-family:'DM Sans';outline:none">
+      </div>
+      <div style="margin-bottom:14px">
+        <label style="font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.08em;display:block;margin-bottom:6px;font-weight:500" data-i18n="profile_confirm">Confirm New Password</label>
+        <input type="password" id="alunoPerfilSenhaConfirm" placeholder="Repeat new password" style="width:100%;background:var(--bg-elevated);border:1px solid var(--border);color:var(--text);padding:10px 13px;border-radius:5px;font-size:14px;font-family:'DM Sans';outline:none">
+      </div>
+    </div>
+    <button onclick="saveAlunoPerfil()" style="background:var(--gold);color:#0b090a;border:none;padding:10px 24px;border-radius:4px;font-size:13px;font-weight:600;cursor:pointer;font-family:'DM Sans'" data-i18n="profile_save">Save Changes</button>
+    <div id="perfilMsg" style="display:none;margin-top:12px;font-size:13px;color:#27AE60"></div>
+  </div>
+</div>
+
+<!-- MODAL CRIAR SENHA (primeiro acesso) -->
+<div class="modal-overlay" id="modalSenha">
+  <div class="modal">
+    <div class="modal-icon">🔐</div>
+    <div class="modal-title" data-i18n="create_password">Create your password</div>
+    <div class="modal-sub" data-i18n="create_password_sub">Welcome! Please create a password to access your courses.</div>
+    <div class="form-group">
+      <label class="form-label" data-i18n="new_password">New Password</label>
+      <input type="password" class="form-input" id="novaSenha" placeholder="Min. 8 characters">
+    </div>
+    <div class="form-group">
+      <label class="form-label" data-i18n="confirm_password">Confirm Password</label>
+      <input type="password" class="form-input" id="confirmarSenha" placeholder="Repeat password">
+    </div>
+    <button class="btn-gold-full" id="btnSalvarSenha" onclick="salvarSenha()" data-i18n="save_access">Save & Access →</button>
+    <div class="error-msg" id="senhaError"></div>
+    <div class="success-msg" id="senhaSuccess"></div>
+  </div>
+</div>
+
+<script>
+const SUPABASE_URL = 'https://SEU-PROJETO.supabase.co';
+const SUPABASE_ANON_KEY = 'SUA-ANON-KEY-AQUI';
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+  auth: {
+    detectSessionInUrl: true,
+    persistSession: true,
+    autoRefreshToken: true
+  }
+});
+
+let currentUser = null;
+let myEnrollments = []; // [{ turma_id, course_id }]
+let allCourses = [];
+let currentLesson = null;
+let currentCourseModules = [];
+let completedLessons = new Set();
+
+// ── AUTH ──────────────────────────────────────────────
+// Versão anti-loop: o callback do Supabase Auth NÃO faz consultas no banco diretamente.
+// Ele apenas agenda a inicialização da área do aluno fora do ciclo interno do Auth.
+let appReady = false;
+let startPromise = null;
+let startScheduled = false;
+let redirectTimer = null;
+let logoutInProgress = false;
+
+function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+function withTimeout(promiseLike, ms, label) {
+  return Promise.race([
+    Promise.resolve(promiseLike),
+    new Promise((_, reject) => setTimeout(() => reject(new Error(`${label} demorou mais de ${Math.round(ms/1000)}s para responder.`)), ms))
+  ]);
+}
+
+async function withRetry(fn, attempts = 3, delay = 300) {
+  let lastError = null;
+  for (let i = 0; i < attempts; i++) {
+    try {
+      return await fn();
+    } catch (error) {
+      lastError = error;
+      if (i < attempts - 1) await sleep(delay * (i + 1));
+    }
+  }
+  throw lastError;
+}
+
+function getAuthParamsFromUrl() {
+  const hashParams = new URLSearchParams(window.location.hash.replace(/^#/, ''));
+  const queryParams = new URLSearchParams(window.location.search.replace(/^\?/, ''));
+
+  return {
+    accessToken: hashParams.get('access_token') || queryParams.get('access_token'),
+    refreshToken: hashParams.get('refresh_token') || queryParams.get('refresh_token'),
+    authCode: queryParams.get('code') || hashParams.get('code'),
+    type: hashParams.get('type') || queryParams.get('type'),
+    firstAccess: queryParams.get('first_access') || hashParams.get('first_access')
+  };
+}
+
+function hasAuthTokensInUrl() {
+  const params = getAuthParamsFromUrl();
+  return Boolean(params.accessToken && params.refreshToken);
+}
+
+function hasAuthParamsInUrl() {
+  const params = getAuthParamsFromUrl();
+  return Boolean((params.accessToken && params.refreshToken) || params.authCode);
+}
+
+function shouldShowPasswordModal(session, forcePasswordModal = false) {
+  const params = getAuthParamsFromUrl();
+  const forcedByIndex = sessionStorage.getItem('forceCreatePassword') === '1';
+  const isInviteLikeLink = ['invite', 'signup'].includes(params.type);
+  const metadataPasswordSet = session?.user?.user_metadata?.password_set === true;
+
+  return (
+    forcePasswordModal ||
+    forcedByIndex ||
+    params.firstAccess === '1' ||
+    isInviteLikeLink ||
+    Boolean(session?.user?.invited_at && !metadataPasswordSet)
+  );
+}
+
+function clearUrlTokens() {
+  if (hasAuthParamsInUrl() || getAuthParamsFromUrl().firstAccess === '1') {
+    history.replaceState(null, '', window.location.pathname);
+  }
+}
+
+function clearRedirectTimer() {
+  if (redirectTimer) {
+    clearTimeout(redirectTimer);
+    redirectTimer = null;
+  }
+}
+
+function getDisplayName(profile, session) {
+  return (
+    profile?.full_name ||
+    session?.user?.user_metadata?.full_name ||
+    profile?.email ||
+    session?.user?.email ||
+    'Student'
+  ).trim();
+}
+
+function getInitials(nameOrEmail) {
+  const value = (nameOrEmail || 'Student').trim();
+  const namePart = value.includes('@') ? value.split('@')[0] : value;
+  return namePart
+    .split(/\s+/)
+    .filter(Boolean)
+    .map(part => part[0])
+    .join('')
+    .slice(0, 2)
+    .toUpperCase() || 'S';
+}
+
+function getFirstName(nameOrEmail) {
+  const value = (nameOrEmail || 'Student').trim();
+  if (value.includes('@')) return value.split('@')[0];
+  return value.split(/\s+/)[0] || 'Student';
+}
+
+function showLoadError(message, technicalError) {
+  console.error(message, technicalError || '');
+
+  const hero = document.getElementById('heroName');
+  const sub = document.getElementById('heroSub');
+  if (hero) hero.textContent = currentLang === 'pt' ? 'Erro ao carregar' : 'Load error';
+  if (sub) sub.textContent = currentLang === 'pt'
+    ? 'Não foi possível carregar sua área de membros.'
+    : 'We could not load your member area.';
+
+  const errorHtml = `
+    <div style="grid-column:1/-1;color:#E74C3C;font-size:14px;padding:24px 0;line-height:1.6">
+      ${message}<br>
+      <button style="margin-top:16px;background:transparent;border:1px solid rgba(229,56,59,.35);color:var(--gold);padding:8px 14px;border-radius:4px;cursor:pointer" onclick="window.location.reload()">
+        Tentar novamente
+      </button>
+      <button style="margin-top:16px;margin-left:8px;background:transparent;border:1px solid rgba(229,56,59,.35);color:var(--gold);padding:8px 14px;border-radius:4px;cursor:pointer" onclick="doLogout()">
+        Sair e entrar de novo
+      </button>
+    </div>`;
+
+  const meusCursos = document.getElementById('meusCursos');
+  const catalogoCursos = document.getElementById('catalogoCursos');
+  if (meusCursos) meusCursos.innerHTML = errorHtml;
+  if (catalogoCursos) catalogoCursos.innerHTML = errorHtml;
+}
+
+function showNoCourses() {
+  const el = document.getElementById('meusCursos');
+  if (!el) return;
+  el.innerHTML = `<div style="grid-column:1/-1;color:var(--text-muted);font-size:14px;padding:24px 0">${t('no_courses')} <a style="color:var(--gold);cursor:pointer" onclick="goView('catalogo')">${t('see_catalog')}</a></div>`;
+  const heroSub = document.getElementById('heroSub');
+  if (heroSub) heroSub.textContent = t('catalog_sub');
+}
+
+async function getSessionWithRetries(attempts = 10, delay = 200) {
+  for (let i = 0; i < attempts; i++) {
+    const { data, error } = await sb.auth.getSession();
+    if (error) throw error;
+    if (data?.session?.user?.id) return data.session;
+    await sleep(delay);
+  }
+  return null;
+}
+
+function redirectToLoginSoon(delay = 900) {
+  if (redirectTimer || appReady || startPromise || startScheduled || hasAuthParamsInUrl() || logoutInProgress) return;
+
+  redirectTimer = setTimeout(async () => {
+    if (appReady || startPromise || startScheduled || hasAuthParamsInUrl()) return;
+
+    try {
+      const session = await getSessionWithRetries(4, 200);
+      if (session) {
+        scheduleAlunoSession(session, false, 'redirect-fallback');
+        return;
+      }
+    } catch (error) {
+      console.error('Erro ao validar sessão antes do redirect:', error);
+    }
+
+    window.location.replace('index.html');
+  }, delay);
+}
+
+function scheduleAlunoSession(session, forcePasswordModal = false, source = 'unknown') {
+  if (!session?.user?.id || appReady || startPromise || startScheduled) return;
+
+  startScheduled = true;
+  clearRedirectTimer();
+
+  setTimeout(() => {
+    startScheduled = false;
+    startAlunoSession(session, forcePasswordModal, source).catch(error => {
+      startPromise = null;
+      appReady = false;
+      showLoadError('Sua sessão foi identificada, mas houve um erro ao buscar seus cursos. Abra o console para ver o erro técnico.', error);
+    });
+  }, 0);
+}
+
+async function startAlunoSession(session, forcePasswordModal = false, source = 'unknown') {
+  if (!session?.user?.id) return false;
+  if (appReady) return true;
+  if (startPromise) return startPromise;
+
+  clearRedirectTimer();
+
+  startPromise = (async () => {
+    await initUser(session, shouldShowPasswordModal(session, forcePasswordModal));
+    clearUrlTokens();
+    appReady = true;
+    return true;
+  })();
+
+  try {
+    return await startPromise;
+  } catch (error) {
+    startPromise = null;
+    appReady = false;
+    throw error;
+  }
+}
+
+async function initUser(session, showPasswordModal) {
+
+  const profileResponse = await withRetry(() => withTimeout(
+    sb.from('profiles')
+      .select('*')
+      .eq('id', session.user.id)
+      .maybeSingle(),
+    12000,
+    'Busca do perfil'
+  ), 3, 350);
+
+  if (profileResponse.error) throw profileResponse.error;
+  if (!profileResponse.data) {
+    throw new Error('Perfil não encontrado na tabela profiles para este usuário. Verifique se a Edge Function criou o profile corretamente e se a policy RLS permite o aluno ler o próprio profile.');
+  }
+
+  const profile = profileResponse.data;
+  const displayName = getDisplayName(profile, session);
+  currentUser = {
+    ...profile,
+    full_name: displayName,
+    email: profile.email || session.user.email || ''
+  };
+
+  const initials = getInitials(displayName);
+  const userInitials = document.getElementById('userInitials');
+  const heroName = document.getElementById('heroName');
+  if (userInitials) userInitials.textContent = initials;
+  if (heroName) heroName.textContent = getFirstName(displayName);
+
+  const enrollmentsResponse = await withRetry(() => withTimeout(
+    sb.from('enrollments')
+      .select('turma_id, turmas(course_id)')
+      .eq('user_id', profile.id)
+      .eq('is_active', true),
+    12000,
+    'Busca das matrículas'
+  ), 3, 350);
+
+  if (enrollmentsResponse.error) throw enrollmentsResponse.error;
+
+  myEnrollments = (enrollmentsResponse.data || [])
+    .map(e => e?.turmas?.course_id)
+    .filter(Boolean);
+
+
+  const progressResponse = await withRetry(() => withTimeout(
+    sb.from('lesson_progress')
+      .select('lesson_id, completed')
+      .eq('user_id', profile.id)
+      .eq('completed', true),
+    12000,
+    'Busca do progresso'
+  ), 3, 350);
+
+  if (progressResponse.error) throw progressResponse.error;
+
+  completedLessons = new Set((progressResponse.data || []).map(p => p.lesson_id));
+
+  if (showPasswordModal) {
+    document.getElementById('modalSenha')?.classList.add('open');
+  }
+
+  await Promise.all([
+    loadHome(),
+    loadCatalog()
+  ]);
+
+  applyLang();
+}
+
+sb.auth.onAuthStateChange((event, session) => {
+
+  const startEvents = ['INITIAL_SESSION', 'SIGNED_IN', 'TOKEN_REFRESHED', 'USER_UPDATED', 'PASSWORD_RECOVERY'];
+
+  if (session?.user?.id && startEvents.includes(event)) {
+    const params = getAuthParamsFromUrl();
+    const forcePasswordModal = event === 'SIGNED_IN' && (['invite', 'signup'].includes(params.type) || sessionStorage.getItem('forceCreatePassword') === '1' || params.firstAccess === '1');
+    scheduleAlunoSession(session, forcePasswordModal, event);
+    return;
+  }
+
+  if (event === 'SIGNED_OUT') {
+    window.location.replace('index.html');
+    return;
+  }
+
+  if (event === 'INITIAL_SESSION' && !session) {
+    if (hasAuthParamsInUrl()) return;
+    redirectToLoginSoon(1200);
+  }
+});
+
+// Bootstrap principal: cobre login normal, convite e casos em que o evento INITIAL_SESSION atrasa.
+(async function bootAlunoAuth() {
+  const params = getAuthParamsFromUrl();
+
+  if (params.accessToken && params.refreshToken) {
+    try {
+      const { data, error } = await withTimeout(sb.auth.setSession({
+        access_token: params.accessToken,
+        refresh_token: params.refreshToken
+      }), 12000, 'Processamento do link de acesso');
+
+      if (error) throw error;
+
+      if (data?.session?.user?.id) {
+        const forceModal = ['invite', 'signup'].includes(params.type) || sessionStorage.getItem('forceCreatePassword') === '1' || params.firstAccess === '1';
+        await startAlunoSession(data.session, forceModal, 'url-token');
+        return;
+      }
+    } catch (error) {
+      showLoadError('Não foi possível processar o link de acesso. Gere um novo link ou tente fazer login novamente.', error);
+      setTimeout(() => window.location.replace('index.html'), 3500);
+      return;
+    }
+  }
+
+  // Convites em formato PKCE podem chegar como aluno.html?code=...
+  // Neste caso o Supabase JS processa o código automaticamente; aguardamos a sessão antes de redirecionar.
+  if (params.authCode) {
+    try {
+      const session = await getSessionWithRetries(20, 250);
+      if (session) {
+        const forceModal = ['invite', 'signup'].includes(params.type) || sessionStorage.getItem('forceCreatePassword') === '1' || params.firstAccess === '1';
+        await startAlunoSession(session, forceModal, 'url-code');
+        return;
+      }
+    } catch (error) {
+      showLoadError('Não foi possível validar o link de acesso. Gere um novo link ou tente fazer login novamente.', error);
+      setTimeout(() => window.location.replace('index.html'), 3500);
+      return;
+    }
+  }
+
+  // Fallback para login normal vindo do index.html.
+  setTimeout(async () => {
+    if (appReady || startPromise || startScheduled) return;
+
+    try {
+      const session = await getSessionWithRetries(12, 250);
+      if (session) {
+        await startAlunoSession(session, false, 'boot-getSession');
+        return;
+      }
+      redirectToLoginSoon(0);
+    } catch (error) {
+      showLoadError('Não foi possível confirmar sua sessão. Faça login novamente.', error);
+      setTimeout(() => window.location.replace('index.html'), 2500);
+    }
+  }, 350);
+
+  // Watchdog final: impede carregamento infinito silencioso.
+  setTimeout(async () => {
+    if (appReady || startPromise || startScheduled || hasAuthParamsInUrl()) return;
+
+    try {
+      const session = await getSessionWithRetries(3, 350);
+      if (session) {
+        await startAlunoSession(session, false, 'watchdog');
+        return;
+      }
+      window.location.replace('index.html');
+    } catch (error) {
+      showLoadError('A área demorou demais para carregar. Atualize a página ou faça login novamente.', error);
+    }
+  }, 5000);
+})();
+
+async function doLogout() {
+  logoutInProgress = true;
+  clearRedirectTimer();
+  appReady = false;
+  startPromise = null;
+  startScheduled = false;
+
+  try {
+    await sb.auth.signOut();
+  } catch (error) {
+    console.error('Erro ao sair pelo Supabase. Limpando sessão local mesmo assim:', error);
+  }
+
+  // Limpa qualquer token local remanescente do Supabase para evitar sessão fantasma após logout/login.
+  try {
+    Object.keys(localStorage).forEach(key => {
+      if (key.startsWith('sb-') && key.includes('auth-token')) localStorage.removeItem(key);
+    });
+    Object.keys(sessionStorage).forEach(key => {
+      if (key.startsWith('sb-') && key.includes('auth-token')) sessionStorage.removeItem(key);
+    });
+  } catch (error) {
+    console.warn('Não foi possível limpar todos os tokens locais:', error);
+  }
+
+  window.location.replace('index.html');
+}
+
+async function salvarSenha() {
+  const senha = document.getElementById('novaSenha').value;
+  const confirmar = document.getElementById('confirmarSenha').value;
+  const btn = document.getElementById('btnSalvarSenha');
+  const err = document.getElementById('senhaError');
+  const suc = document.getElementById('senhaSuccess');
+
+  err.style.display = 'none';
+  suc.style.display = 'none';
+
+  if (senha.length < 8) {
+    err.textContent = 'A senha deve ter pelo menos 8 caracteres.';
+    err.style.display = 'block';
+    return;
+  }
+
+  if (senha !== confirmar) {
+    err.textContent = 'As senhas não coincidem.';
+    err.style.display = 'block';
+    return;
+  }
+
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner-sm"></span>Salvando...';
+
+  const { error } = await sb.auth.updateUser({
+    password: senha,
+    data: { password_set: true }
+  });
+
+  if (error) {
+    err.textContent = 'Erro ao salvar senha. Tente novamente.';
+    err.style.display = 'block';
+    btn.disabled = false;
+    btn.textContent = 'Salvar e Acessar →';
+    return;
+  }
+
+  suc.textContent = 'Senha criada com sucesso! Agora faça login com seu email e sua nova senha.';
+  suc.style.display = 'block';
+  sessionStorage.removeItem('forceCreatePassword');
+
+  setTimeout(async () => {
+    document.getElementById('modalSenha')?.classList.remove('open');
+    try {
+      await sb.auth.signOut();
+    } catch (error) {
+      console.warn('Senha criada, mas não foi possível encerrar a sessão automaticamente:', error);
+    }
+    window.location.replace(window.location.origin + '/index.html?senha_criada=1');
+  }, 1400);
+}
+
+// ── i18n ──────────────────────────────────────────────
+const i18n = {
+  en: {
+    nav_courses:'My Courses', nav_catalog:'Catalog', nav_profile:'My Profile',
+    btn_logout:'Sign Out', hero_welcome:'Welcome back',
+    my_courses:'My Courses', catalog:'Full Catalog', catalog_sub:'Explore all available courses',
+    loading:'Loading...', no_courses:'You are not enrolled in any courses yet.',
+    see_catalog:'Browse catalog →', progress_pct:'% complete',
+    get_access:'Get access →', you_have_access:'✓ You have access',
+    mark_done:'✓ Mark as complete', completed:'✓ Completed',
+    materials:'📎 Lesson Materials', download:'⬇ Download',
+    profile_title:'My Profile', profile_name:'Full name', profile_email:'Email',
+    profile_email_hint:'Email cannot be changed', profile_password:'New Password',
+    profile_password_hint:'Leave blank to keep current password',
+    profile_confirm:'Confirm New Password', profile_save:'Save Changes',
+    profile_success:'Profile updated!', profile_err_name:'Please enter your name.',
+    profile_err_match:'Passwords do not match.', profile_err_short:'Password must be at least 8 characters.',
+    create_password:'Create your password',
+    create_password_sub:'Welcome! Please create a password to access your courses.',
+    new_password:'New Password', confirm_password:'Confirm Password',
+    save_access:'Save & Access →', lang_flag:'🇺🇸', lang_label:'EN'
+  },
+  pt: {
+    nav_courses:'Meus Cursos', nav_catalog:'Catálogo', nav_profile:'Meu Perfil',
+    btn_logout:'Sair', hero_welcome:'Bem-vindo de volta',
+    my_courses:'Meus Cursos', catalog:'Catálogo Completo', catalog_sub:'Explore todos os cursos disponíveis',
+    loading:'Carregando...', no_courses:'Você ainda não está matriculado em nenhum curso.',
+    see_catalog:'Ver catálogo →', progress_pct:'% concluído',
+    get_access:'Ver página de vendas →', you_have_access:'✓ Você tem acesso',
+    mark_done:'✓ Marcar como concluída', completed:'✓ Concluída',
+    materials:'📎 Materiais desta Aula', download:'⬇ Baixar',
+    profile_title:'Meu Perfil', profile_name:'Nome completo', profile_email:'Email',
+    profile_email_hint:'O email não pode ser alterado', profile_password:'Nova Senha',
+    profile_password_hint:'Deixe em branco para não alterar',
+    profile_confirm:'Confirmar Nova Senha', profile_save:'Salvar Alterações',
+    profile_success:'Perfil atualizado!', profile_err_name:'Digite seu nome.',
+    profile_err_match:'As senhas não coincidem.', profile_err_short:'A senha deve ter pelo menos 8 caracteres.',
+    create_password:'Crie sua senha',
+    create_password_sub:'Bem-vindo! Para acessar seus cursos, crie uma senha para sua conta.',
+    new_password:'Nova Senha', confirm_password:'Confirmar Senha',
+    save_access:'Salvar e Acessar →', lang_flag:'🇧🇷', lang_label:'PT'
+  },
+  es: {
+    nav_courses:'Mis Cursos', nav_catalog:'Catálogo', nav_profile:'Mi Perfil',
+    btn_logout:'Salir', hero_welcome:'Bienvenido de nuevo',
+    my_courses:'Mis Cursos', catalog:'Catálogo Completo', catalog_sub:'Explora todos los cursos disponibles',
+    loading:'Cargando...', no_courses:'Aún no estás matriculado en ningún curso.',
+    see_catalog:'Ver catálogo →', progress_pct:'% completado',
+    get_access:'Ver página de ventas →', you_have_access:'✓ Tienes acceso',
+    mark_done:'✓ Marcar como completada', completed:'✓ Completada',
+    materials:'📎 Materiales de la Clase', download:'⬇ Descargar',
+    profile_title:'Mi Perfil', profile_name:'Nombre completo', profile_email:'Correo',
+    profile_email_hint:'El correo no puede cambiarse', profile_password:'Nueva Contraseña',
+    profile_password_hint:'Déjalo en blanco para no cambiar',
+    profile_confirm:'Confirmar Nueva Contraseña', profile_save:'Guardar Cambios',
+    profile_success:'¡Perfil actualizado!', profile_err_name:'Ingresa tu nombre.',
+    profile_err_match:'Las contraseñas no coinciden.', profile_err_short:'La contraseña debe tener al menos 8 caracteres.',
+    create_password:'Crea tu contraseña',
+    create_password_sub:'¡Bienvenido! Crea una contraseña para acceder a tus cursos.',
+    new_password:'Nueva Contraseña', confirm_password:'Confirmar Contraseña',
+    save_access:'Guardar y Acceder →', lang_flag:'🇪🇸', lang_label:'ES'
+  }
+};
+
+let currentLang = localStorage.getItem('cmc_lang') || 'en';
+
+function t(key) { return i18n[currentLang]?.[key] || i18n.en[key] || key; }
+
+function applyLang() {
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    el.textContent = t(el.getAttribute('data-i18n'));
+  });
+  document.getElementById('langFlag').textContent = t('lang_flag');
+  document.getElementById('langLabel').textContent = t('lang_label');
+  document.querySelectorAll('.lang-option').forEach(o => o.classList.remove('active'));
+  document.getElementById('lang-'+currentLang)?.classList.add('active');
+  // Modal senha
+  const mTitle = document.querySelector('.modal-title');
+  const mSub = document.querySelector('.modal-sub');
+  const mBtn = document.getElementById('btnSalvarSenha');
+  if(mTitle) mTitle.textContent = t('create_password');
+  if(mSub) mSub.textContent = t('create_password_sub');
+  if(mBtn && !mBtn.disabled) mBtn.textContent = t('save_access');
+}
+
+function setLang(lang) {
+  currentLang = lang;
+  localStorage.setItem('cmc_lang', lang);
+  applyLang();
+  toggleLangDropdown(false);
+  if (currentUser) {
+    loadHome().catch(error => showLoadError('Erro ao recarregar seus cursos após trocar o idioma.', error));
+    loadCatalog().catch(error => showLoadError('Erro ao recarregar o catálogo após trocar o idioma.', error));
+  }
+  applyLang();
+}
+
+function toggleDrawer() {
+  const drawer = document.getElementById('mobileDrawer');
+  const btn = document.getElementById('hamburgerBtn');
+  drawer.classList.toggle('open');
+  btn.classList.toggle('open');
+}
+
+function closeDrawer() {
+  document.getElementById('mobileDrawer')?.classList.remove('open');
+  document.getElementById('hamburgerBtn')?.classList.remove('open');
+}
+
+// Fecha drawer ao clicar fora
+document.addEventListener('click', e => {
+  if (!e.target.closest('#mobileDrawer') && !e.target.closest('#hamburgerBtn')) {
+    closeDrawer();
+  }
+});
+
+function toggleLangDropdown(force) {
+  const sel = document.getElementById('langSelector');
+  if (force === false) sel.classList.remove('open');
+  else sel.classList.toggle('open');
+}
+
+document.addEventListener('click', e => {
+  if (!e.target.closest('#langSelector')) document.getElementById('langSelector')?.classList.remove('open');
+});
+function goView(v) {
+  document.querySelectorAll('.view').forEach(el => el.classList.remove('active'));
+  document.getElementById('view-'+v).classList.add('active');
+  if (v === 'perfil') loadAlunoPerfil();
+}
+
+function loadAlunoPerfil() {
+  if (!currentUser) return;
+  document.getElementById('alunoPerfilName').value = currentUser.full_name || '';
+  document.getElementById('alunoPerfilEmail').value = currentUser.email || '';
+  const initials = currentUser.full_name?.split(' ').map(n=>n[0]).join('').slice(0,2).toUpperCase() || '?';
+  document.getElementById('alunoPerfilAvatar').textContent = initials;
+  document.getElementById('alunoPerfilNome').textContent = currentUser.full_name || '';
+}
+
+async function saveAlunoPerfil() {
+  const name = document.getElementById('alunoPerfilName').value.trim();
+  const senha = document.getElementById('alunoPerfilSenha').value;
+  const senhaConfirm = document.getElementById('alunoPerfilSenhaConfirm').value;
+  const msg = document.getElementById('perfilMsg');
+  msg.style.display = 'none';
+  if (!name) { msg.textContent = t('profile_err_name'); msg.style.color='#E74C3C'; msg.style.display='block'; return; }
+  if (senha && senha !== senhaConfirm) { msg.textContent = t('profile_err_match'); msg.style.color='#E74C3C'; msg.style.display='block'; return; }
+  if (senha && senha.length < 8) { msg.textContent = t('profile_err_short'); msg.style.color='#E74C3C'; msg.style.display='block'; return; }
+  await sb.from('profiles').update({ full_name: name }).eq('id', currentUser.id);
+  if (senha) await sb.auth.updateUser({ password: senha, data: { password_set: true } });
+  currentUser.full_name = name;
+  const initials = name.split(' ').map(n=>n[0]).join('').slice(0,2).toUpperCase();
+  document.getElementById('userInitials').textContent = initials;
+  document.getElementById('heroName').textContent = name.split(' ')[0];
+  document.getElementById('alunoPerfilSenha').value = '';
+  document.getElementById('alunoPerfilSenhaConfirm').value = '';
+  document.getElementById('alunoPerfilNome').textContent = name;
+  document.getElementById('alunoPerfilAvatar').textContent = initials;
+  msg.textContent = t('profile_success'); msg.style.color='#27AE60'; msg.style.display='block';
+  setTimeout(() => msg.style.display='none', 3000);
+}
+
+function setNavActive(el) {
+  document.querySelectorAll('.nav-link').forEach(n => n.classList.remove('active'));
+  el.classList.add('active');
+}
+
+// ── HOME ──────────────────────────────────────────────
+async function loadHome() {
+  const el = document.getElementById('meusCursos');
+
+  if (!myEnrollments.length) {
+    showNoCourses();
+    return;
+  }
+
+  const { data: courses, error } = await withTimeout(
+    sb.from('courses')
+      .select('*, modules(lessons(id))')
+      .in('id', myEnrollments)
+      .eq('is_published', true),
+    12000,
+    'Busca dos cursos do aluno'
+  );
+
+  if (error) throw error;
+
+  if (!courses || !courses.length) {
+    showNoCourses();
+    return;
+  }
+
+  allCourses = courses;
+  el.innerHTML = courses.map(c => {
+    const totalLessons = (c.modules||[]).reduce((acc,m) => acc + (m.lessons||[]).length, 0);
+    const doneLessons = (c.modules||[]).reduce((acc,m) => acc + (m.lessons||[]).filter(l => completedLessons.has(l.id)).length, 0);
+    const pct = totalLessons ? Math.round(doneLessons/totalLessons*100) : 0;
+    return `
+      <div class="course-card" onclick="openCourse('${c.id}')">
+        <div class="course-thumb">
+          ${c.thumbnail_url ? `<img src="${c.thumbnail_url}" alt="${c.title}">` : '🔬'}
+        </div>
+        <div class="course-body">
+          <div class="course-name">${c.title}</div>
+          <div class="course-meta">${totalLessons} lessons</div>
+          <div class="course-progress">
+            <div class="progress-bar"><div class="progress-fill" style="width:${pct}%"></div></div>
+            <div class="progress-text">${pct}${t('progress_pct')}</div>
+          </div>
+        </div>
+      </div>`;
+  }).join('');
+
+  const lastPct = courses.reduce((max,c) => {
+    const total = (c.modules||[]).reduce((a,m)=>a+(m.lessons||[]).length,0);
+    const done = (c.modules||[]).reduce((a,m)=>a+(m.lessons||[]).filter(l=>completedLessons.has(l.id)).length,0);
+    return total ? Math.max(max, Math.round(done/total*100)) : max;
+  }, 0);
+
+  const heroSub = document.getElementById('heroSub');
+  if (heroSub) heroSub.textContent = lastPct > 0 ? `You are ${lastPct}% of the way. Keep going! 🎵` : 'Click on a course to get started.';
+}
+
+// ── CATÁLOGO ──────────────────────────────────────────
+async function loadCatalog() {
+  const { data: courses, error } = await withTimeout(
+    sb.from('courses')
+      .select('*')
+      .eq('is_published', true)
+      .order('created_at',{ascending:false}),
+    12000,
+    'Busca do catálogo'
+  );
+
+  if (error) throw error;
+
+  const el = document.getElementById('catalogoCursos');
+  if (!courses || !courses.length) {
+    el.innerHTML = '<div class="loading">Nenhum curso disponível ainda.</div>';
+    return;
+  }
+
+  el.innerHTML = courses.map(c => {
+    const owned = myEnrollments.includes(c.id);
+    return `
+      <div class="course-card ${owned?'':'locked'}" onclick="${owned ? `openCourse('${c.id}')` : `buyCourse('${c.sales_page_url||''}','${c.title}')`}">
+        <div class="course-thumb">
+          ${c.thumbnail_url ? `<img src="${c.thumbnail_url}" alt="${c.title}">` : '🔬'}
+          ${!owned ? `<div class="lock-overlay"><span class="lock-icon">🔒</span><span class="lock-text">Adquirir Curso</span></div>` : ''}
+        </div>
+        <div class="course-body">
+          <div class="course-name">${c.title}</div>
+          <div class="course-meta">${c.level||''} · ${c.category||''}</div>
+          ${owned
+            ? `<div style="margin-top:8px;font-size:11px;color:#27AE60;font-weight:600">${t('you_have_access')}</div>`
+            : `<button class="btn-comprar" onclick="event.stopPropagation();buyCourse('${c.sales_page_url||''}','${c.title}')">${t('get_access')}</button>`
+          }
+        </div>
+      </div>`;
+  }).join('');
+}
+
+function buyCourse(url, title) {
+  if (url) window.open(url, '_blank');
+  else alert(`To get "${title}", please contact the instructor.`);
+}
+
+// ── PLAYER ────────────────────────────────────────────
+async function openCourse(courseId) {
+  if (!myEnrollments.includes(courseId)) return;
+  goView('player');
+  const { data: course } = await sb.from('courses').select('title').eq('id', courseId).single();
+
+  // Busca turma do aluno para este curso
+  const { data: enrollment } = await sb.from('enrollments')
+    .select('turma_id, turmas(restrict_modules)')
+    .eq('user_id', currentUser.id)
+    .eq('is_active', true)
+    .in('turma_id', (await sb.from('turmas').select('id').eq('course_id', courseId)).data?.map(t=>t.id) || [])
+    .single();
+
+  const turmaId = enrollment?.turma_id;
+  const restrictModules = enrollment?.turmas?.restrict_modules;
+
+  // Busca módulos permitidos se turma tiver restrição
+  let allowedModuleIds = null;
+  if (restrictModules && turmaId) {
+    const { data: tm } = await sb.from('turma_modules').select('module_id').eq('turma_id', turmaId);
+    allowedModuleIds = new Set((tm||[]).map(m => m.module_id));
+  }
+
+  const { data: modules } = await sb.from('modules')
+    .select('*, lessons(*, lesson_files(*))')
+    .eq('course_id', courseId)
+    .order('position');
+
+  // Filtra módulos se houver restrição
+  currentCourseModules = (modules || []).filter(m =>
+    !allowedModuleIds || allowedModuleIds.has(m.id)
+  );
+
+  document.getElementById('playerCourseLink').textContent = course?.title || '...';
+  document.getElementById('playerCourseLink').setAttribute('onclick', `openCourse('${courseId}')`);
+
+  let firstLesson = null;
+  for (const m of currentCourseModules) {
+    const sorted = (m.lessons||[]).sort((a,b)=>a.position-b.position);
+    const unfinished = sorted.find(l => !completedLessons.has(l.id));
+    if (unfinished) { firstLesson = unfinished; break; }
+    if (sorted.length && !firstLesson) firstLesson = sorted[0];
+  }
+  if (firstLesson) playLesson(firstLesson);
+  renderPlaylist();
+}
+
+function renderPlaylist() {
+  const pl = document.getElementById('playlist');
+  pl.innerHTML = `<div class="playlist-title">${t('my_courses')}</div>` +
+    currentCourseModules.map(m => `
+      <div class="playlist-module">
+        <div class="playlist-module-title">${m.title}</div>
+        ${(m.lessons||[]).sort((a,b)=>a.position-b.position).map(l => `
+          <div class="playlist-lesson ${currentLesson?.id===l.id?'active':''} ${completedLessons.has(l.id)?'done':''}"
+               id="pl-${l.id}" onclick="playLesson(${JSON.stringify(l).replace(/"/g,'&quot;')})">
+            <span class="pl-icon">${completedLessons.has(l.id)?'✓':'▶'}</span>
+            <span class="pl-title">${l.title}</span>
+            <span class="pl-dur">${formatDur(l.duration_seconds)}</span>
+          </div>`).join('')}
+      </div>`).join('');
+}
+
+function playLesson(lesson) {
+  currentLesson = lesson;
+  document.getElementById('playerTitle').textContent = lesson.title;
+  document.getElementById('playerMeta').textContent = formatDur(lesson.duration_seconds);
+  document.getElementById('playerLessonBread').textContent = lesson.title;
+
+  // Embed URL
+  const embedUrl = getEmbedUrl(lesson.video_url);
+  document.getElementById('playerIframe').src = embedUrl || '';
+
+  // Botão concluído
+  const btn = document.getElementById('btnDone');
+  if (completedLessons.has(lesson.id)) {
+    btn.textContent = '✓ Concluída'; btn.style.background='#27AE60'; btn.disabled=true;
+  } else {
+    btn.textContent=t('mark_done'); btn.style.background='var(--gold)'; btn.disabled=false;
+  }
+
+  const files = lesson.lesson_files || [];
+  const filesSection = document.getElementById('playerFiles');
+  if (files.length) {
+    document.getElementById('filesList').innerHTML = files.map(f => `
+      <div class="file-item">
+        <span style="color:var(--gold)">📄</span>
+        <span class="file-name">${f.name}</span>
+        <a href="${f.file_url}" target="_blank" class="btn-download">${t('download')}</a>
+      </div>`).join('');
+    document.querySelector('.files-title').textContent = t('materials');
+    filesSection.style.display='block';
+  } else {
+    filesSection.style.display='none';
+  }
+
+  document.querySelectorAll('.playlist-lesson').forEach(el => el.classList.remove('active'));
+  const plItem = document.getElementById('pl-'+lesson.id);
+  if (plItem) { plItem.classList.add('active'); plItem.scrollIntoView({behavior:'smooth',block:'nearest'}); }
+
+  sb.from('lesson_progress').upsert({ user_id: currentUser.id, lesson_id: lesson.id, last_watched_at: new Date().toISOString() }, { onConflict: 'user_id,lesson_id' });
+}
+
+async function markDone() {
+  if (!currentLesson) return;
+  await sb.from('lesson_progress').upsert({
+    user_id: currentUser.id, lesson_id: currentLesson.id,
+    completed: true, last_watched_at: new Date().toISOString()
+  }, { onConflict: 'user_id,lesson_id' });
+  completedLessons.add(currentLesson.id);
+  const btn = document.getElementById('btnDone');
+  btn.textContent=t('completed'); btn.style.background='#27AE60'; btn.disabled=true;
+
+  const plItem = document.getElementById('pl-'+currentLesson.id);
+  if (plItem) { plItem.classList.add('done'); plItem.querySelector('.pl-icon').textContent='✓'; }
+
+  setTimeout(() => nextLesson(), 1200);
+}
+
+function nextLesson() {
+  if (!currentLesson) return;
+  for (const m of currentCourseModules) {
+    const sorted = (m.lessons||[]).sort((a,b)=>a.position-b.position);
+    const idx = sorted.findIndex(l => l.id === currentLesson.id);
+    if (idx !== -1 && idx < sorted.length - 1) { playLesson(sorted[idx+1]); return; }
+    // próximo módulo
+    const mIdx = currentCourseModules.indexOf(m);
+    if (mIdx < currentCourseModules.length - 1) {
+      const nextM = currentCourseModules[mIdx+1];
+      const next = (nextM.lessons||[]).sort((a,b)=>a.position-b.position)[0];
+      if (next) { playLesson(next); return; }
+    }
+  }
+}
+
+function getEmbedUrl(url) {
+  if (!url) return '';
+  // YouTube
+  const yt = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([a-zA-Z0-9_-]{11})/);
+  if (yt) return `https://www.youtube.com/embed/${yt[1]}?autoplay=1`;
+  // Vimeo
+  const vm = url.match(/vimeo\.com\/(\d+)/);
+  if (vm) return `https://player.vimeo.com/video/${vm[1]}?autoplay=1`;
+  return url;
+}
+
+function formatDur(s) {
+  if (!s) return '';
+  const m = Math.floor(s/60), sec = s%60;
+  return m+'min'+(sec?` ${sec}s`:'');
+}
+</script>
+</body>
+</html>

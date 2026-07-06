@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Login — AlbanoLab</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  :root {
+    --gold: #e5383b; --gold-light: #ff6b6e; --gold-dim: #7a0c0e;
+    --bg: #0b090a; --bg-card: #161a1d; --bg-elevated: #1f2428;
+    --text: #F5F0E8; --text-muted: #5A5548; --text-secondary: #9A947E;
+    --border: rgba(229,56,59,0.15); --border-hover: rgba(229,56,59,0.35);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text);
+    min-height: 100vh; display: flex; align-items: center; justify-content: center;
+  }
+  .login-wrap { width: 100%; max-width: 400px; padding: 24px; }
+  .login-logo { text-align: center; margin-bottom: 36px; }
+  .logo-icon { font-size: 40px; margin-bottom: 12px; }
+  .logo-title { font-family: 'Playfair Display', serif; font-size: 22px; color: var(--gold); }
+  .logo-sub { font-size: 12px; color: var(--text-muted); letter-spacing: 0.12em; text-transform: uppercase; margin-top: 4px; }
+  .card {
+    background: var(--bg-card); border: 1px solid var(--border); border-radius: 10px; padding: 32px;
+  }
+  .card-title { font-family: 'Playfair Display', serif; font-size: 18px; color: var(--text); margin-bottom: 6px; }
+  .card-sub { font-size: 13px; color: var(--text-muted); margin-bottom: 24px; }
+  .form-group { margin-bottom: 16px; }
+  .form-label { font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.08em; display: block; margin-bottom: 6px; font-weight: 500; }
+  .form-input {
+    width: 100%; background: var(--bg-elevated); border: 1px solid var(--border);
+    color: var(--text); padding: 11px 14px; border-radius: 5px;
+    font-size: 14px; font-family: 'DM Sans', sans-serif; outline: none; transition: border 0.15s;
+  }
+  .form-input:focus { border-color: var(--gold); }
+  .form-input::placeholder { color: var(--text-muted); }
+  .btn-gold {
+    width: 100%; background: var(--gold); color: #0b090a; border: none; padding: 12px;
+    border-radius: 5px; font-size: 14px; font-weight: 600; cursor: pointer;
+    font-family: 'DM Sans', sans-serif; transition: all 0.2s; margin-top: 8px;
+  }
+  .btn-gold:hover { background: var(--gold-light); }
+  .btn-gold:disabled { opacity: 0.5; cursor: not-allowed; }
+  .error-msg { background: rgba(192,57,43,0.12); border: 1px solid rgba(192,57,43,0.3); color: #E74C3C; padding: 10px 14px; border-radius: 5px; font-size: 13px; margin-top: 12px; display: none; }
+  .success-msg { background: rgba(39,174,96,0.12); border: 1px solid rgba(39,174,96,0.3); color: #27AE60; padding: 10px 14px; border-radius: 5px; font-size: 13px; margin-top: 12px; display: none; }
+  .divider { border: none; border-top: 1px solid var(--border); margin: 20px 0; }
+  .tab-btns { display: flex; gap: 0; margin-bottom: 24px; border: 1px solid var(--border); border-radius: 6px; overflow: hidden; }
+  .tab-btn { flex: 1; padding: 9px; background: none; border: none; color: var(--text-muted); font-size: 13px; cursor: pointer; font-family: 'DM Sans'; transition: all 0.15s; }
+  .tab-btn.active { background: var(--bg-elevated); color: var(--gold); font-weight: 500; }
+  .spinner { display: inline-block; width: 14px; height: 14px; border: 2px solid rgba(10,10,8,0.3); border-top-color: #0b090a; border-radius: 50%; animation: spin 0.6s linear infinite; vertical-align: middle; margin-right: 6px; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+</style>
+</head>
+<body>
+<div class="login-wrap">
+  <div class="login-logo">
+    <div class="logo-icon">🔬</div>
+    <div class="logo-title">AlbanoLab</div>
+    <div class="logo-sub">Members Area</div>
+  </div>
+
+  <div class="card">
+    <div class="tab-btns">
+      <button class="tab-btn active" onclick="setTab('login')">Sign In</button>
+      <button class="tab-btn" onclick="setTab('forgot')">Reset Password</button>
+    </div>
+
+    <!-- LOGIN -->
+    <div id="tab-login">
+      <div class="card-title">Welcome!</div>
+      <div class="card-sub">Access the purchased course using the login email registered at the time of purchase and the password you created.</div>
+      <div class="form-group">
+        <label class="form-label">Email</label>
+        <input type="email" class="form-input" id="loginEmail" placeholder="your@email.com" onkeydown="if(event.key==='Enter')doLogin()">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Password</label>
+        <input type="password" class="form-input" id="loginPassword" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()">
+      </div>
+      <button class="btn-gold" id="btnLogin" onclick="doLogin()">Sign In</button>
+      <div class="error-msg" id="loginError"></div>
+    </div>
+
+    <!-- ESQUECI SENHA -->
+    <div id="tab-forgot" style="display:none">
+      <div class="card-title">Reset Password</div>
+      <div class="card-sub">We'll send a reset link to your email</div>
+      <div class="form-group">
+        <label class="form-label">Email</label>
+        <input type="email" class="form-input" id="forgotEmail" placeholder="your@email.com">
+      </div>
+      <button class="btn-gold" id="btnForgot" onclick="doForgot()">Send Reset Link</button>
+      <div class="error-msg" id="forgotError"></div>
+      <div class="success-msg" id="forgotSuccess"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+  const SUPABASE_URL = 'https://SEU-PROJETO.supabase.co';
+  const SUPABASE_ANON_KEY = 'SUA-ANON-KEY-AQUI';
+
+  // Se o link de convite cair no index.html por causa do redirect do Supabase,
+  // encaminhamos o token para aluno.html antes do Supabase consumir a sessão aqui.
+  (function forwardInviteLinkToAluno() {
+    const hash = window.location.hash || '';
+    const search = window.location.search || '';
+    const hashParams = new URLSearchParams(hash.replace(/^#/, ''));
+    const queryParams = new URLSearchParams(search.replace(/^\?/, ''));
+    const type = hashParams.get('type') || queryParams.get('type');
+    const firstAccess = hashParams.get('first_access') === '1' || queryParams.get('first_access') === '1';
+    const hasAuthParam = Boolean(
+      hashParams.get('access_token') ||
+      hashParams.get('refresh_token') ||
+      queryParams.get('code') ||
+      queryParams.get('access_token') ||
+      queryParams.get('refresh_token')
+    );
+
+    const isInviteLike = firstAccess || ['invite', 'signup'].includes(type);
+
+    if (hasAuthParam && isInviteLike) {
+      try { sessionStorage.setItem('forceCreatePassword', '1'); } catch (e) {}
+      window.location.replace('aluno.html' + search + hash);
+    }
+  })();
+
+  const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+    auth: {
+      detectSessionInUrl: true,
+      persistSession: true,
+      autoRefreshToken: true
+    }
+  });
+
+  const queryParams = new URLSearchParams(window.location.search);
+  if (queryParams.get('senha_criada') === '1') {
+    const loginError = document.getElementById('loginError');
+    loginError.textContent = 'Password created successfully. Please sign in with your email and password.';
+    loginError.style.display = 'block';
+    loginError.style.color = '#27AE60';
+    history.replaceState(null, '', window.location.pathname);
+  }
+
+  function isFirstAccessSession(session) {
+    if (!session?.user) return false;
+    const forcedByUrl = queryParams.get('first_access') === '1';
+    let forcedByStorage = false;
+    try { forcedByStorage = sessionStorage.getItem('forceCreatePassword') === '1'; } catch (e) {}
+
+    return Boolean(
+      forcedByUrl ||
+      forcedByStorage ||
+      (session.user.invited_at && !session.user.user_metadata?.password_set)
+    );
+  }
+
+  function redirectSession(session) {
+    if (!session?.user) return;
+
+    if (isFirstAccessSession(session)) {
+      try { sessionStorage.setItem('forceCreatePassword', '1'); } catch (e) {}
+      window.location.replace('aluno.html?first_access=1');
+      return;
+    }
+
+    redirectByRole(session.user.id);
+  }
+
+  // Redireciona se já estiver logado ou se o Supabase processar um convite nesta página.
+  let redirecting = false;
+
+  sb.auth.onAuthStateChange((event, session) => {
+    if (redirecting) return;
+
+    if ((event === 'SIGNED_IN' || event === 'INITIAL_SESSION') && session) {
+      redirecting = true;
+      setTimeout(() => redirectSession(session), 0);
+    }
+  });
+
+  sb.auth.getSession().then(({ data: { session } }) => {
+    if (!redirecting && session) {
+      redirecting = true;
+      redirectSession(session);
+    }
+  });
+
+  function setTab(tab) {
+    document.getElementById('tab-login').style.display = tab === 'login' ? 'block' : 'none';
+    document.getElementById('tab-forgot').style.display = tab === 'forgot' ? 'block' : 'none';
+    document.querySelectorAll('.tab-btn').forEach((b, i) => {
+      b.classList.toggle('active', (tab === 'login' && i === 0) || (tab === 'forgot' && i === 1));
+    });
+  }
+
+  async function redirectByRole(userId) {
+    const { data } = await sb.from('profiles').select('role').eq('id', userId).single();
+    if (data?.role === 'admin') window.location.href = 'admin.html';
+    else window.location.href = 'aluno.html';
+  }
+
+  async function doLogin() {
+    const email = document.getElementById('loginEmail').value.trim();
+    const password = document.getElementById('loginPassword').value;
+    const btn = document.getElementById('btnLogin');
+    const err = document.getElementById('loginError');
+    if (!email || !password) { showError(err, 'Please fill in your email and password.'); return; }
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner"></span>Signing in...';
+    err.style.display = 'none';
+    const { data, error } = await sb.auth.signInWithPassword({ email, password });
+    if (error) { showError(err, 'Incorrect email or password.'); btn.disabled = false; btn.textContent = 'Sign In'; return; }
+    redirectByRole(data.user.id);
+  }
+
+  async function doForgot() {
+    const email = document.getElementById('forgotEmail').value.trim();
+    const btn = document.getElementById('btnForgot');
+    const err = document.getElementById('forgotError');
+    const suc = document.getElementById('forgotSuccess');
+    if (!email) { showError(err, 'Please enter your email.'); return; }
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner"></span>Sending...';
+    const { error } = await sb.auth.resetPasswordForEmail(email, { redirectTo: window.location.origin + '/index.html' });
+    btn.disabled = false; btn.textContent = 'Send Reset Link';
+    if (error) showError(err, 'Error sending email. Please check the address.');
+    else { err.style.display = 'none'; suc.textContent = 'Reset link sent! Please check your email.'; suc.style.display = 'block'; }
+  }
+
+  function showError(el, msg) { el.textContent = msg; el.style.display = 'block'; }
+</script>
+</body>
+</html>
