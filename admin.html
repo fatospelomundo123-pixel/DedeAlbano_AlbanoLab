@@ -422,17 +422,18 @@
       <div class="form-hint">Encontre na URL do produto na plataforma</div>
     </div>
     <div class="form-group" id="mapOfferCodeGroup">
-      <label class="form-label">Offer Code <span style="color:var(--text-muted);font-weight:400">(opcional — para ofertas específicas na Hotmart)</span></label>
+      <label class="form-label">Offer Code <span style="color:var(--text-muted);font-weight:400">(opcional — para ofertas específicas)</span></label>
       <input type="text" class="form-input" id="mapOfferCode" placeholder="Ex: abc123def">
-      <div class="form-hint">Se preenchido, prevalece sobre o ID do produto. Use para diferenciar turmas dentro do mesmo produto.</div>
+      <div class="form-hint">Use para diferenciar turmas dentro do mesmo produto.</div>
     </div>
     <div class="form-group">
-      <label class="form-label">Turma</label>
-      <select class="form-input" id="mapTurma"><option value="">Selecione...</option></select>
+      <label class="form-label">Turmas <span style="color:var(--text-muted);font-weight:400">(selecione uma ou mais para combos)</span></label>
+      <div id="mapTurmasList" style="background:var(--bg-elevated);border:1px solid var(--border);border-radius:12px;padding:12px;display:flex;flex-direction:column;gap:8px;max-height:200px;overflow-y:auto"></div>
+      <div class="form-hint">Marque todas as turmas que o aluno deve receber acesso ao comprar este produto/oferta.</div>
     </div>
     <div class="form-group">
       <label class="form-label">Descrição</label>
-      <input type="text" class="form-input" id="mapDesc" placeholder="Ex: Chord Melody - Turma A Completa">
+      <input type="text" class="form-input" id="mapDesc" placeholder="Ex: ScapeLab Ultimate Pro (Combo 3 cursos)">
     </div>
     <div style="display:flex;gap:10px;margin-top:8px">
       <button class="btn-gold" onclick="saveMapeamento()">Salvar</button>
@@ -1295,14 +1296,20 @@ async function loadTurmasSelect() {
 // ── MAPEAMENTOS ───────────────────────────────────────
 async function loadMapeamentos() {
   const { data } = await sb.from('product_mappings')
-    .select('*, turmas(name)')
+    .select('*, turmas(name), product_mapping_turmas(turma_id, turmas(name))')
     .order('created_at', {ascending: false});
   const tbody = document.getElementById('mapeamentosBody');
   if (!data || !data.length) {
     tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:32px;color:var(--text-muted)">Nenhum mapeamento ainda. Clique em "+ Novo Mapeamento".</td></tr>';
     return;
   }
-  tbody.innerHTML = data.map(m => `
+  tbody.innerHTML = data.map(m => {
+    const comboTurmas = m.product_mapping_turmas || [];
+    const turmasNames = comboTurmas.length > 0
+      ? comboTurmas.map(t => t.turmas?.name).filter(Boolean).join(', ')
+      : m.turmas?.name || '—';
+    const isCombo = comboTurmas.length > 1;
+    return `
     <tr>
       <td>
         <span style="background:${m.platform==='hotmart'?'rgba(255,107,0,.12)':m.platform==='kiwify'?'rgba(0,180,100,.12)':'rgba(99,91,255,.12)'};color:${m.platform==='hotmart'?'#FF6B00':m.platform==='kiwify'?'#00B464':'#635BFF'};padding:3px 10px;border-radius:6px;font-size:11px;font-weight:600;text-transform:uppercase">
@@ -1313,11 +1320,14 @@ async function loadMapeamentos() {
         <div style="font-size:12px;color:var(--text)">${m.offer_code ? `<span style="color:var(--gold)">Offer: ${m.offer_code}</span>` : m.product_id || '—'}</div>
         ${m.offer_code && m.product_id ? `<div style="font-size:11px;color:var(--text-muted)">Produto: ${m.product_id}</div>` : ''}
       </td>
-      <td style="color:var(--text)">${m.turmas?.name || '—'}</td>
+      <td style="color:var(--text);font-size:13px">
+        ${isCombo ? `<span style="background:rgba(229,56,59,.1);color:var(--gold);padding:2px 8px;border-radius:6px;font-size:11px;font-weight:600;margin-bottom:4px;display:inline-block">COMBO ${comboTurmas.length} cursos</span><br>` : ''}
+        <span style="color:var(--text-secondary);font-size:12px">${turmasNames}</span>
+      </td>
       <td style="color:var(--text-muted);font-size:12px">${m.description || '—'}</td>
       <td><button class="btn-danger btn-sm" onclick="deleteMapeamento('${m.id}')">Excluir</button></td>
-    </tr>
-  `).join('');
+    </tr>`;
+  }).join('');
 }
 
 function toggleOfferCode(platform) {
@@ -1326,16 +1336,18 @@ function toggleOfferCode(platform) {
 }
 
 async function openModalNovoMapeamento() {
-  // Carrega turmas no select
   const { data } = await sb.from('turmas').select('id, name, courses(title)').eq('is_active', true).order('name');
-  const sel = document.getElementById('mapTurma');
-  sel.innerHTML = '<option value="">Selecione a turma...</option>' + (data||[]).map(t =>
-    `<option value="${t.id}">${t.name}${t.courses?.title ? ' — '+t.courses.title : ''}</option>`
-  ).join('');
+  const list = document.getElementById('mapTurmasList');
+  list.innerHTML = (data||[]).map(t => `
+    <label style="display:flex;align-items:center;gap:8px;font-size:13px;color:var(--text-secondary);cursor:pointer;padding:4px 0">
+      <input type="checkbox" class="map-turma-check" value="${t.id}" style="accent-color:var(--gold)">
+      <span><strong style="color:var(--text)">${t.name}</strong>${t.courses?.title ? ' <span style="color:var(--text-muted)">— '+t.courses.title+'</span>' : ''}</span>
+    </label>
+  `).join('');
   document.getElementById('mapProductId').value = '';
   document.getElementById('mapOfferCode').value = '';
   document.getElementById('mapDesc').value = '';
-  document.getElementById('mapPlatform').value = 'hotmart';
+  document.getElementById('mapPlatform').value = 'kiwify';
   document.getElementById('mapOfferCodeGroup').style.display = 'block';
   openModal('modalNovoMapeamento');
 }
@@ -1344,22 +1356,31 @@ async function saveMapeamento() {
   const platform = document.getElementById('mapPlatform').value;
   const productId = document.getElementById('mapProductId').value.trim();
   const offerCode = document.getElementById('mapOfferCode').value.trim();
-  const turmaId = document.getElementById('mapTurma').value;
   const desc = document.getElementById('mapDesc').value.trim();
+  const selectedTurmas = [...document.querySelectorAll('.map-turma-check:checked')].map(c => c.value);
 
-  if (!turmaId) { toast('Selecione uma turma', 'error'); return; }
+  if (selectedTurmas.length === 0) { toast('Selecione pelo menos uma turma', 'error'); return; }
   if (!productId && !offerCode) { toast('Preencha o ID do produto ou offer code', 'error'); return; }
 
-  const { error } = await sb.from('product_mappings').insert({
+  // Usa primeira turma como turma principal (retrocompatibilidade)
+  const { data: mapping, error } = await sb.from('product_mappings').insert({
     platform,
     product_id: productId || '',
     offer_code: offerCode || null,
-    turma_id: turmaId,
+    turma_id: selectedTurmas[0],
     description: desc || null
-  });
+  }).select().single();
 
   if (error) { toast('Erro: ' + error.message, 'error'); return; }
-  toast('Mapeamento salvo!');
+
+  // Se mais de uma turma, salva as extras na tabela de combos
+  if (selectedTurmas.length > 1) {
+    await sb.from('product_mapping_turmas').insert(
+      selectedTurmas.map(turmaId => ({ mapping_id: mapping.id, turma_id: turmaId }))
+    );
+  }
+
+  toast(selectedTurmas.length > 1 ? `Combo salvo! ${selectedTurmas.length} turmas vinculadas.` : 'Mapeamento salvo!');
   closeModal('modalNovoMapeamento');
   loadMapeamentos();
 }
