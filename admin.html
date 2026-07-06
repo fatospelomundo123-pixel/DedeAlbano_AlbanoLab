@@ -3,15 +3,15 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Admin — AlbanoLab</title>
+<title>Admin — Chord Melody Club</title>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
   :root {
-    --gold:#e5383b;--gold-light:#ff6b6e;--gold-dim:#7a0c0e;
-    --bg:#0b090a;--bg-card:#161a1d;--bg-elevated:#1f2428;--bg-hover:#262b30;
+    --gold:#C9A84C;--gold-light:#E8C97A;--gold-dim:#7A5E28;
+    --bg:#0A0A08;--bg-card:#141410;--bg-elevated:#1C1C18;--bg-hover:#242420;
     --text:#F5F0E8;--text-secondary:#9A947E;--text-muted:#5A5548;
-    --border:rgba(229,56,59,0.15);--border-hover:rgba(229,56,59,0.35);
+    --border:rgba(201,168,76,0.15);--border-hover:rgba(201,168,76,0.35);
   }
   *{box-sizing:border-box;margin:0;padding:0;}
   body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;}
@@ -24,7 +24,7 @@
   .nav-section{padding:8px 16px 4px;font-size:10px;color:var(--text-muted);letter-spacing:.12em;text-transform:uppercase;font-weight:500;}
   .nav-item{display:flex;align-items:center;gap:10px;padding:10px 20px;cursor:pointer;color:var(--text-secondary);font-size:13.5px;border-left:2px solid transparent;transition:all .15s;}
   .nav-item:hover{color:var(--text);background:var(--bg-hover);}
-  .nav-item.active{color:var(--gold);background:rgba(229,56,59,.07);border-left-color:var(--gold);}
+  .nav-item.active{color:var(--gold);background:rgba(201,168,76,.07);border-left-color:var(--gold);}
   .sidebar-footer{padding:20px;border-top:1px solid var(--border);}
   .user-card{display:flex;align-items:center;gap:10px;}
   .user-avatar{width:34px;height:34px;border-radius:50%;background:var(--gold-dim);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600;color:var(--gold-light);flex-shrink:0;}
@@ -34,7 +34,7 @@
   .topbar{display:flex;align-items:center;justify-content:space-between;padding:0 32px;height:64px;background:rgba(10,10,8,.95);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:50;backdrop-filter:blur(10px);}
   .topbar-title{font-family:'Playfair Display',serif;font-size:18px;}
   .topbar-actions{display:flex;align-items:center;gap:12px;}
-  .btn-gold{background:var(--gold);color:#0b090a;border:none;padding:8px 18px;border-radius:4px;font-size:13px;font-weight:600;cursor:pointer;font-family:'DM Sans';transition:all .2s;}
+  .btn-gold{background:var(--gold);color:#0A0A08;border:none;padding:8px 18px;border-radius:4px;font-size:13px;font-weight:600;cursor:pointer;font-family:'DM Sans';transition:all .2s;}
   .btn-gold:hover{background:var(--gold-light);}
   .btn-gold:disabled{opacity:.5;cursor:not-allowed;}
   .btn-outline{background:transparent;color:var(--text-secondary);border:1px solid var(--border-hover);padding:7px 16px;border-radius:4px;font-size:13px;cursor:pointer;font-family:'DM Sans';transition:all .2s;}
@@ -100,7 +100,7 @@
   .badge{display:inline-block;font-size:10px;font-weight:600;padding:2px 8px;border-radius:3px;letter-spacing:.05em;}
   .badge-active{background:rgba(39,174,96,.12);color:#27AE60;}
   .badge-inactive{background:rgba(90,85,72,.3);color:var(--text-muted);}
-  .badge-draft{background:rgba(229,56,59,.12);color:var(--gold);}
+  .badge-draft{background:rgba(201,168,76,.12);color:var(--gold);}
   .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:200;display:none;align-items:center;justify-content:center;}
   .modal-overlay.open{display:flex;}
   .modal{background:var(--bg-card);border:1px solid var(--border);border-radius:10px;padding:32px;width:100%;max-width:520px;position:relative;max-height:90vh;overflow-y:auto;}
@@ -137,7 +137,7 @@
 <div class="layout">
 <aside class="sidebar">
   <div class="sidebar-logo">
-    <div class="logo-text">🔬 AlbanoLab</div>
+    <div class="logo-text">🎸 Chord Melody Club</div>
     <div class="logo-sub">Painel Admin</div>
   </div>
   <nav class="sidebar-nav">
@@ -204,7 +204,7 @@
       <a onclick="goView('cursos')">Cursos</a> › <span id="modulosCourseTitle">...</span>
     </div>
     <div class="course-hero">
-      <div class="course-hero-thumb" id="modulosThumb">🔬</div>
+      <div class="course-hero-thumb" id="modulosThumb">🎸</div>
       <div class="course-hero-info">
         <div class="course-hero-title" id="modulosTitle">...</div>
         <div class="course-hero-desc" id="modulosDesc">...</div>
@@ -341,7 +341,7 @@
     </div>
 
     <!-- Explicação rápida -->
-    <div style="background:rgba(229,56,59,.06);border:1px solid var(--border);border-radius:8px;padding:16px 20px;margin-bottom:24px;font-size:13px;color:var(--text-secondary);line-height:1.6">
+    <div style="background:rgba(201,168,76,.06);border:1px solid var(--border);border-radius:8px;padding:16px 20px;margin-bottom:24px;font-size:13px;color:var(--text-secondary);line-height:1.6">
       <strong style="color:var(--gold)">Como funciona:</strong> quando um aluno compra na Hotmart ou Stripe, o sistema busca aqui qual turma deve ser liberada para o produto comprado. Cadastre um mapeamento para cada produto/oferta.
     </div>
 
@@ -413,6 +413,7 @@
       <select class="form-input" id="mapPlatform" onchange="toggleOfferCode(this.value)">
         <option value="hotmart">Hotmart</option>
         <option value="stripe">Stripe</option>
+        <option value="kiwify">Kiwify</option>
       </select>
     </div>
     <div class="form-group" id="mapProductIdGroup">
@@ -654,8 +655,8 @@
 <div class="toast-area" id="toastArea"></div>
 
 <script>
-const SUPABASE_URL = 'https://SEU-PROJETO.supabase.co';
-const SUPABASE_ANON_KEY = 'SUA-ANON-KEY-AQUI';
+const SUPABASE_URL = 'https://uqipklefmcrruaejbcgf.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVxaXBrbGVmbWNycnVhZWpiY2dmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg3Nzc5MDMsImV4cCI6MjA5NDM1MzkwM30.rqidnB9VTShj-6KouM1GxAXphFtnA2B38Kp_z3LxLc8';
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 let currentUser = null;
@@ -745,7 +746,7 @@ function renderCourseCards(containerId, courses) {
   el.innerHTML = courses.map(c => `
     <div class="course-card" onclick="loadModules('${c.id}')">
       <div class="course-thumb">
-        ${c.thumbnail_url ? `<img src="${c.thumbnail_url}" alt="${c.title}">` : '🔬'}
+        ${c.thumbnail_url ? `<img src="${c.thumbnail_url}" alt="${c.title}">` : '🎸'}
       </div>
       <div class="course-badge" style="background:${c.is_published ? 'rgba(39,174,96,0.15)' : 'rgba(90,85,72,0.3)'};border-color:${c.is_published ? '#27AE60' : 'var(--text-muted)'};color:${c.is_published ? '#27AE60' : 'var(--text-muted)'}">
         ${c.is_published ? '● PUBLICADO' : '○ RASCUNHO'}
@@ -920,7 +921,7 @@ async function loadModules(courseId) {
   document.getElementById('modulosTitle').textContent = course.title;
   document.getElementById('modulosDesc').textContent = course.description || '';
   const thumb = document.getElementById('modulosThumb');
-  thumb.innerHTML = course.thumbnail_url ? `<img src="${course.thumbnail_url}">` : '🔬';
+  thumb.innerHTML = course.thumbnail_url ? `<img src="${course.thumbnail_url}">` : '🎸';
 
   document.getElementById('modulesList').innerHTML = '<div class="loading"><span class="spinner"></span>Carregando...</div>';
   const { data: modules } = await sb.from('modules').select('*, lessons(*)').eq('course_id', courseId).order('position');
@@ -1304,7 +1305,7 @@ async function loadMapeamentos() {
   tbody.innerHTML = data.map(m => `
     <tr>
       <td>
-        <span style="background:${m.platform==='hotmart'?'rgba(255,107,0,.12)':'rgba(99,91,255,.12)'};color:${m.platform==='hotmart'?'#FF6B00':'#635BFF'};padding:3px 10px;border-radius:3px;font-size:11px;font-weight:600;text-transform:uppercase">
+        <span style="background:${m.platform==='hotmart'?'rgba(255,107,0,.12)':m.platform==='kiwify'?'rgba(0,180,100,.12)':'rgba(99,91,255,.12)'};color:${m.platform==='hotmart'?'#FF6B00':m.platform==='kiwify'?'#00B464':'#635BFF'};padding:3px 10px;border-radius:3px;font-size:11px;font-weight:600;text-transform:uppercase">
           ${m.platform}
         </span>
       </td>
@@ -1321,7 +1322,7 @@ async function loadMapeamentos() {
 
 function toggleOfferCode(platform) {
   const offerGroup = document.getElementById('mapOfferCodeGroup');
-  offerGroup.style.display = platform === 'hotmart' ? 'block' : 'none';
+  offerGroup.style.display = (platform === 'hotmart' || platform === 'kiwify') ? 'block' : 'none';
 }
 
 async function openModalNovoMapeamento() {
