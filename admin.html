@@ -1426,7 +1426,7 @@ async function inviteAluno() {
 
   try {
     const { data: { session } } = await sb.auth.getSession();
-    const res = await fetch(`${SUPABASE_URL}/functions/v1/invite-aluno`, {
+    const res = await fetch(`${SUPABASE_URL}/functions/v1/invite-aluno-ts`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
